@@ -1,0 +1,7 @@
+/* beam palette — the nanohype brand blue (#3b82f6), kept exact across L + D. */
+:root {
+  --primary: #3b82f6;
+}
+:root[data-theme='light'] {
+  --primary: #3b82f6;
+}

@@ -1,0 +1,7 @@
+/* indigo palette — the shuttering default accent. */
+:root {
+  --primary: #9a9bf0;
+}
+:root[data-theme='light'] {
+  --primary: #5457d6;
+}

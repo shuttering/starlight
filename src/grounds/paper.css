@@ -1,0 +1,19 @@
+/* paper ground — cool neutral. The default when a docsite has no house ground. */
+:root {
+  --background: #0b0b0d;
+  --foreground: #ededf0;
+  --card: #151517;
+  --muted: #1e1e21;
+  --muted-foreground: #9a9aa2;
+  --border: rgba(255, 255, 255, 0.08);
+  --scrollbar-thumb: #42424a;
+}
+:root[data-theme='light'] {
+  --background: #fafafa;
+  --foreground: #191a1b;
+  --card: #ffffff;
+  --muted: #f3f3f4;
+  --muted-foreground: #64656b;
+  --border: #e6e6e8;
+  --scrollbar-thumb: #bcbcc2;
+}

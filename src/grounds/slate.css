@@ -1,0 +1,19 @@
+/* slate ground — steel slate. The rackctl ground. */
+:root {
+  --background: #0c0f14;
+  --foreground: #e6e9f0;
+  --card: #151922;
+  --muted: #1b212c;
+  --muted-foreground: #8b93a6;
+  --border: rgba(155, 176, 208, 0.1);
+  --scrollbar-thumb: #3a4451;
+}
+:root[data-theme='light'] {
+  --background: #f7f8fa;
+  --foreground: #161a22;
+  --card: #ffffff;
+  --muted: #eef0f4;
+  --muted-foreground: #616a7d;
+  --border: #e3e6ec;
+  --scrollbar-thumb: #bcc2ce;
+}

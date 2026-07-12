@@ -1,0 +1,7 @@
+/* steel palette — muted steel-blue. The rackctl accent. */
+:root {
+  --primary: #96a4c6;
+}
+:root[data-theme='light'] {
+  --primary: #4a5878;
+}

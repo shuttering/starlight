@@ -1,0 +1,238 @@
+/*
+ * @shuttering/starlight — a Starlight theme cut from the shuttering contract.
+ *
+ * Starlight isn't Tailwind, so it can't consume @shuttering/tokens directly. This
+ * file is the bridge: it maps the shuttering CONTRACT variables onto Starlight's
+ * own `--sl-color-*` system, then quiets the stock chrome into a calmer, less
+ * bordered surface.
+ *
+ * The contract is small — a ground supplies six vars, a palette one:
+ *   ground   --background --foreground --card --muted --muted-foreground --border
+ *   palette  --primary
+ *   fonts    --font-sans-face --font-mono-face   (bring-your-own)
+ *
+ * Everything else Starlight needs (its 7-step gray scale, accents, surfaces) is
+ * DERIVED from those with color-mix, so any ground drops in without hand-tuning a
+ * scale. Because a ground flips --background/--foreground between light and dark,
+ * this mapping is written once (theme-agnostic) and resolves correctly in both.
+ *
+ * Import order in a consumer's `customCss`:
+ *   '@shuttering/starlight/grounds/<ground>.css'   (sets the contract, L + D)
+ *   '@shuttering/starlight/palettes/<palette>.css' (sets --primary, L + D)
+ *   '@shuttering/starlight'                        (this file — the mapping)
+ * Fonts: set --font-*-face yourself (or let the system fallback stand).
+ */
+
+:root {
+  /* -- Fonts (bring-your-own; system fallback) ------------------------------ */
+  --sl-font: var(--font-sans-face, ui-sans-serif, system-ui, -apple-system, sans-serif);
+  --sl-font-mono: var(--font-mono-face, ui-monospace, SFMono-Regular, Menlo, monospace);
+
+  /* -- Text + surface scale, derived from the ground ------------------------
+     Starlight reads white→black as brightest-text→page-bg. Since the ground
+     flips these per theme, one derivation covers light and dark. */
+  --sl-color-white: var(--foreground);
+  --sl-color-gray-1: color-mix(in oklab, var(--foreground) 90%, var(--background));
+  --sl-color-gray-2: color-mix(in oklab, var(--foreground) 75%, var(--background));
+  --sl-color-gray-3: var(--muted-foreground, color-mix(in oklab, var(--foreground) 55%, var(--background)));
+  --sl-color-gray-4: color-mix(in oklab, var(--foreground) 40%, var(--background));
+  --sl-color-gray-5: color-mix(in oklab, var(--foreground) 22%, var(--background));
+  --sl-color-gray-6: var(--card, color-mix(in oklab, var(--foreground) 9%, var(--background)));
+  --sl-color-gray-7: color-mix(in oklab, var(--card, var(--foreground)) 45%, var(--background));
+  --sl-color-black: var(--background);
+
+  /* -- Accent, derived from the palette ------------------------------------- */
+  --sl-color-accent-low: color-mix(in oklab, var(--primary) 16%, var(--background));
+  --sl-color-accent: var(--primary);
+  --sl-color-accent-high: color-mix(in oklab, var(--primary) 68%, var(--foreground));
+
+  /* -- Named surfaces -------------------------------------------------------
+     Nav and page share the ground so the header reads as one plane (no seam).
+     The sidebar is a hair off-ground, not a boxed panel. */
+  --sl-color-bg: var(--background);
+  --sl-color-bg-nav: var(--background);
+  --sl-color-bg-sidebar: color-mix(in oklab, var(--background) 94%, var(--foreground));
+  --sl-color-bg-inline-code: color-mix(in oklab, var(--foreground) 8%, var(--background));
+
+  /* -- Hairlines: faint, and used sparingly (see chrome below) --------------- */
+  --sl-color-hairline: var(--border, color-mix(in oklab, var(--foreground) 12%, transparent));
+  --sl-color-hairline-shade: color-mix(in oklab, var(--foreground) 6%, transparent);
+  --sl-color-hairline-light: color-mix(in oklab, var(--foreground) 16%, transparent);
+
+  /* A soft accent wash reused by active nav + card hover. */
+  --sh-accent-wash: color-mix(in oklab, var(--primary) 12%, transparent);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Chrome — quieter than stock: separate with surface + space, not borders.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Header: one plane with the page — a whisper of blur, no hard rule. */
+.header {
+  border-bottom: none;
+  box-shadow: 0 1px 0 var(--sl-color-hairline-shade);
+  backdrop-filter: blur(8px);
+}
+.site-title {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* Sidebar: no panel border; group labels are quiet mono; the active leaf gets a
+   soft accent wash + a single thin accent bar (the one deliberate line). */
+.sidebar-pane {
+  border-inline-end: none;
+}
+.sidebar-content a {
+  font-size: var(--sl-text-sm);
+  border-radius: 4px;
+}
+.sidebar-content .large,
+starlight-menu-content .large {
+  font-family: var(--sl-font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.07em;
+  text-transform: lowercase;
+  color: var(--sl-color-gray-3);
+}
+.sidebar-content a[aria-current='page'],
+.sidebar-content a[aria-current='page']:hover {
+  color: var(--sl-color-white);
+  background: var(--sh-accent-wash);
+  border-inline-start: 2px solid var(--sl-color-accent);
+  border-radius: 0 4px 4px 0;
+  font-weight: 600;
+}
+
+/* Links: accent text with a soft underline — no heavy decoration. */
+.sl-markdown-content a:not(:where(.not-content *)) {
+  color: var(--sl-color-accent-high);
+  text-underline-offset: 0.2em;
+  text-decoration-color: color-mix(in oklab, var(--primary) 40%, transparent);
+}
+
+/* Inline code: a tinted chip, no border. */
+.sl-markdown-content code:not(:where(.not-content *)) {
+  background: var(--sl-color-bg-inline-code);
+  border-radius: 4px;
+  padding: 0.12em 0.38em;
+  font-size: 0.86em;
+}
+
+/* Code blocks: a flat readout on a recessed surface — a single soft frame, no
+   inner rules. */
+.expressive-code .frame {
+  --code-background: color-mix(in oklab, var(--foreground) 5%, var(--background));
+  --code-border: transparent;
+}
+.expressive-code .frame pre {
+  border: 1px solid var(--sl-color-hairline-shade);
+  border-radius: 6px;
+}
+.expressive-code .frame.has-title .header {
+  border: none;
+  box-shadow: none;
+}
+
+/* Cards: filled panels, no border at rest; a soft accent edge on hover. Reads as
+   a surface, not a boxed pill. */
+.card {
+  background: var(--sl-color-gray-6);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  box-shadow: none;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.card:hover {
+  border-color: color-mix(in oklab, var(--primary) 32%, transparent);
+  background: color-mix(in oklab, var(--sl-color-gray-6) 85%, var(--primary));
+}
+.card .icon {
+  color: var(--sl-color-accent);
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 1.1rem;
+}
+.card .title {
+  font-family: var(--sl-font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  color: var(--sl-color-white);
+}
+
+/* Headings: tight, on-brand tracking. */
+.sl-markdown-content :is(h1, h2, h3, h4) {
+  letter-spacing: -0.015em;
+}
+
+/* Tables: row rhythm only — a quiet header underline and hairline row splits,
+   no vertical rules or full grid. */
+.sl-markdown-content table:not(:where(.not-content *)) {
+  border-collapse: collapse;
+}
+.sl-markdown-content :is(th, td):not(:where(.not-content *)) {
+  border: none;
+  border-bottom: 1px solid var(--sl-color-hairline-shade);
+}
+.sl-markdown-content th:not(:where(.not-content *)) {
+  font-family: var(--sl-font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  text-transform: lowercase;
+  color: var(--sl-color-gray-3);
+  font-weight: 500;
+  border-bottom-color: var(--sl-color-hairline);
+}
+
+/* Asides/callouts: a tinted surface with a single accent edge, no full outline. */
+.starlight-aside {
+  border: none;
+  border-inline-start: 2px solid var(--starlight-aside-border, var(--sl-color-accent));
+  border-radius: 0 6px 6px 0;
+  background: color-mix(in oklab, var(--starlight-aside-border, var(--sl-color-accent)) 8%, var(--background));
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Scrollbar — shuttering's reveal-on-intent overlay (ported from base.css).
+   Firefox: a thin token-colored thumb over a transparent track. WebKit: an 8px
+   transparent-track rounded thumb, near-invisible at rest, fading in while the
+   scroll area is hovered and one step toward the foreground on the thumb's own
+   hover. Color from the ground's --scrollbar-thumb (derived if a ground omits it).
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+  --sh-scrollbar-thumb: var(--scrollbar-thumb, color-mix(in oklab, var(--foreground) 24%, var(--background)));
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--sh-scrollbar-thumb) transparent;
+}
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 9999px;
+  transition: background 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+:hover::-webkit-scrollbar-thumb {
+  background: var(--sh-scrollbar-thumb);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--sh-scrollbar-thumb), var(--foreground) 25%);
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::-webkit-scrollbar-thumb {
+    transition: none;
+  }
+}

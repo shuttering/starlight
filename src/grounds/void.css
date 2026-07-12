@@ -1,0 +1,20 @@
+/* void ground — indigo navy. The nanohype ground (matches nanohype.dev). */
+:root {
+  /* dark (Starlight's default theme) */
+  --background: #0c1226;
+  --foreground: #dbe4f0;
+  --card: #0d1326;
+  --muted: #111830;
+  --muted-foreground: #94a3b8;
+  --border: rgba(148, 163, 184, 0.1);
+  --scrollbar-thumb: #2a3a5f;
+}
+:root[data-theme='light'] {
+  --background: #f7f8fb;
+  --foreground: #151b2e;
+  --card: #ffffff;
+  --muted: #eef1f7;
+  --muted-foreground: #5b647d;
+  --border: #e2e6f0;
+  --scrollbar-thumb: #b8c0d6;
+}

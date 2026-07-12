@@ -1,0 +1,30 @@
+{
+  "name": "@shuttering/starlight",
+  "version": "0.1.0",
+  "description": "A Starlight docs theme cut from the shuttering contract — token-driven grounds + palettes, quiet and low-border.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/theme.css",
+    "./grounds/*": "./src/grounds/*",
+    "./palettes/*": "./src/palettes/*"
+  },
+  "files": [
+    "src"
+  ],
+  "keywords": [
+    "starlight",
+    "astro",
+    "theme",
+    "docs",
+    "shuttering"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shuttering/starlight.git"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  }
+}
