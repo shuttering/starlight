@@ -27,6 +27,10 @@
   /* -- Fonts (bring-your-own; system fallback) ------------------------------ */
   --sl-font: var(--font-sans-face, ui-sans-serif, system-ui, -apple-system, sans-serif);
   --sl-font-mono: var(--font-mono-face, ui-monospace, SFMono-Regular, Menlo, monospace);
+  /* Headings resolve to the display face when a site sets one, else the body
+     face — so a docsite can give headers a brand font without pairing the whole
+     scale (set --font-display-face; leave it unset for a single-font site). */
+  --sh-font-display: var(--font-display-face, var(--sl-font));
 
   /* -- Text + surface scale, derived from the ground ------------------------
      Starlight reads white→black as brightest-text→page-bg. Since the ground
@@ -51,7 +55,7 @@
      The sidebar is a hair off-ground, not a boxed panel. */
   --sl-color-bg: var(--background);
   --sl-color-bg-nav: var(--background);
-  --sl-color-bg-sidebar: color-mix(in oklab, var(--background) 94%, var(--foreground));
+  --sl-color-bg-sidebar: var(--background);
   --sl-color-bg-inline-code: color-mix(in oklab, var(--foreground) 8%, var(--background));
 
   /* -- Hairlines: faint, and used sparingly (see chrome below) --------------- */
@@ -63,23 +67,36 @@
   --sh-accent-wash: color-mix(in oklab, var(--primary) 12%, transparent);
 }
 
+/* Text selection: tint the text with the accent, no background highlight. */
+::selection {
+  background: transparent;
+  color: var(--sl-color-accent-high);
+}
+
 /* ─────────────────────────────────────────────────────────────────────────
    Chrome — quieter than stock: separate with surface + space, not borders.
    ───────────────────────────────────────────────────────────────────────── */
 
-/* Header: one plane with the page — a whisper of blur, no hard rule. */
+/* Header: one plane with the page — a whisper of blur, no rule, no divider. */
 .header {
   border-bottom: none;
-  box-shadow: 0 1px 0 var(--sl-color-hairline-shade);
+  box-shadow: none;
   backdrop-filter: blur(8px);
+}
+/* Drop Starlight's vertical divider before the header controls. */
+.social-icons::after {
+  border-inline-end: 0 !important;
 }
 .site-title {
   font-weight: 600;
   letter-spacing: -0.01em;
+  font-family: var(--sh-font-display);
 }
 
-/* Sidebar: no panel border; group labels are quiet mono; the active leaf gets a
-   soft accent wash + a single thin accent bar (the one deliberate line). */
+/* Sidebar: flush with the page (no panel, no border); group labels are quiet
+   mono. Each group's item list carries one hairline rail (Starlight's default);
+   the active leaf lights the segment of that rail beside it — no second bar — and
+   gets a soft accent wash. */
 .sidebar-pane {
   border-inline-end: none;
 }
@@ -97,11 +114,22 @@ starlight-menu-content .large {
 }
 .sidebar-content a[aria-current='page'],
 .sidebar-content a[aria-current='page']:hover {
+  position: relative;
   color: var(--sl-color-white);
   background: var(--sh-accent-wash);
-  border-inline-start: 2px solid var(--sl-color-accent);
-  border-radius: 0 4px 4px 0;
+  border-radius: 4px;
   font-weight: 600;
+}
+/* Light the group rail beside the active leaf (align to the list's
+   border-inline-start), rather than drawing a second line at the item's edge. */
+.sidebar-content a[aria-current='page']::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: calc(-1 * var(--sl-sidebar-item-padding-inline, 0.5rem) - 1px);
+  width: 2px;
+  border-radius: 2px;
+  background: var(--sl-color-accent);
 }
 
 /* Links: accent text with a soft underline — no heavy decoration. */
@@ -163,8 +191,11 @@ starlight-menu-content .large {
   color: var(--sl-color-white);
 }
 
-/* Headings: tight, on-brand tracking. */
-.sl-markdown-content :is(h1, h2, h3, h4) {
+/* Headings: the display face (falls back to body), tight on-brand tracking.
+   Covers markdown headings and the page title. */
+.sl-markdown-content :is(h1, h2, h3, h4, h5, h6),
+.content-panel h1 {
+  font-family: var(--sh-font-display);
   letter-spacing: -0.015em;
 }
 
@@ -193,6 +224,67 @@ starlight-menu-content .large {
   border-inline-start: 2px solid var(--starlight-aside-border, var(--sl-color-accent));
   border-radius: 0 6px 6px 0;
   background: color-mix(in oklab, var(--starlight-aside-border, var(--sl-color-accent)) 8%, var(--background));
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Page footer — prev/next + the edit/updated meta: minimal and text-forward,
+   no boxed cards. Starlight scopes these in @layer starlight.core, so these
+   unlayered rules win without a specificity fight.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Prev/next: borderless, tight, a soft fill on hover instead of an outline. */
+.pagination-links a {
+  border: none;
+  border-radius: 6px;
+  box-shadow: none;
+  padding: 0.5rem 0.65rem;
+  gap: 0.55rem;
+  color: var(--sl-color-gray-3);
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.pagination-links a:hover {
+  background: var(--sl-color-gray-6);
+  color: var(--sl-color-white);
+}
+/* the "previous"/"next" label → a quiet mono eyebrow */
+.pagination-links a > span {
+  font-family: var(--sl-font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+  color: var(--sl-color-gray-3);
+  line-height: 1.5;
+}
+/* the target title → modest, not the stock 2xl slab */
+.pagination-links .link-title {
+  font-family: var(--sh-font-display);
+  font-size: var(--sl-text-base);
+  font-weight: 500;
+  line-height: 1.35;
+  text-transform: none;
+  color: var(--sl-color-gray-1);
+}
+.pagination-links a:hover .link-title {
+  color: var(--sl-color-accent-high);
+}
+.pagination-links svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  color: var(--sl-color-gray-4);
+}
+.pagination-links a:hover svg {
+  color: var(--sl-color-accent);
+}
+
+/* Edit-page + last-updated: small, quiet mono, aligned with the eyebrows above. */
+footer .meta a,
+footer .meta p {
+  font-family: var(--sl-font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  color: var(--sl-color-gray-3);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -234,5 +326,56 @@ starlight-menu-content .large {
 @media (prefers-reduced-motion: reduce) {
   ::-webkit-scrollbar-thumb {
     transition: none;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Page transitions — active when the consumer enables Astro's ClientRouter
+   (via @shuttering/starlight/Head.astro). Only the page body cross-fades; the
+   header and sidebar are pinned as their own groups and held perfectly still,
+   so the logo and nav never flicker or dip mid-transition.
+   ───────────────────────────────────────────────────────────────────────── */
+.header {
+  view-transition-name: sh-header;
+}
+.sidebar-pane {
+  view-transition-name: sh-sidebar;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* the body: a quiet cross-fade with a hair of lift */
+  ::view-transition-old(root) {
+    animation: 200ms cubic-bezier(0.16, 1, 0.3, 1) both sh-page-out;
+  }
+  ::view-transition-new(root) {
+    animation: 220ms cubic-bezier(0.16, 1, 0.3, 1) both sh-page-in;
+  }
+  /* the chrome: don't animate at all — no crossfade, no opacity dip */
+  ::view-transition-old(sh-header),
+  ::view-transition-new(sh-header),
+  ::view-transition-old(sh-sidebar),
+  ::view-transition-new(sh-sidebar) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+}
+
+@keyframes sh-page-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes sh-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
 }

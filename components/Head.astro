@@ -1,0 +1,64 @@
+---
+// @shuttering/starlight Head override — Starlight's head tags plus Astro's
+// ClientRouter, so docs navigate as smooth view transitions instead of full page
+// reloads. The transition animation (a quiet cross-fade, chrome held stable) is
+// styled in theme.css. Replicates Starlight's default Head inline rather than
+// importing it, so the file has no package-relative imports.
+//
+// Wire it in a consumer's astro.config:
+//   starlight({ components: { Head: '@shuttering/starlight/Head.astro' } })
+import { ClientRouter } from 'astro:transitions';
+const { head } = Astro.locals.starlightRoute;
+---
+
+{head.map(({ tag: Tag, attrs, content }) => <Tag {...attrs} set:html={content} />)}
+<ClientRouter />
+
+<script>
+  // Make a TOC click authoritative. Starlight's scroll-spy detects the current
+  // heading in a band near the top of the viewport; the last (short) sections can
+  // never scroll into it, so clicking them leaves the wrong item highlighted. On
+  // click, set the clicked link current and re-assert it past the scroll-spy's
+  // post-jump update. (One delegated listener per page; survives view transitions.)
+  const setTocCurrent = (link) => {
+    const toc = link && link.closest('starlight-toc');
+    if (!toc || link.getAttribute('aria-current') === 'true') return;
+    for (const l of toc.querySelectorAll('a')) l.removeAttribute('aria-current');
+    link.setAttribute('aria-current', 'true');
+  };
+  // Desired link after a click; a MutationObserver reverts the scroll-spy's
+  // post-jump override back to it for a short window (instantly, whenever it
+  // fires — robust to the observer re-initialising late after a view transition).
+  let desired = null;
+  let desiredUntil = 0;
+  let applying = false;
+  const enforceDesired = () => {
+    if (applying || !desired || Date.now() > desiredUntil) return;
+    const toc = desired.closest('starlight-toc');
+    if (!toc) return;
+    const currents = toc.querySelectorAll('a[aria-current="true"]');
+    if (currents.length === 1 && currents[0] === desired) return;
+    applying = true;
+    for (const l of currents) l.removeAttribute('aria-current');
+    desired.setAttribute('aria-current', 'true');
+    applying = false;
+  };
+  const mo = new MutationObserver(enforceDesired);
+  const wireToc = () => {
+    const toc = document.querySelector('starlight-toc');
+    if (!toc) return;
+    mo.disconnect();
+    mo.observe(toc, { subtree: true, attributes: true, attributeFilter: ['aria-current'] });
+    if (toc.dataset.shWired) return;
+    toc.dataset.shWired = 'true';
+    toc.addEventListener('click', (e) => {
+      const link = e.target.closest('a[href^="#"]');
+      if (!link) return;
+      desired = link;
+      desiredUntil = Date.now() + 1000;
+      enforceDesired();
+    });
+  };
+  document.addEventListener('astro:page-load', wireToc);
+  wireToc();
+</script>
