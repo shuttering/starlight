@@ -1,0 +1,92 @@
+name: release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Why this exists
+# ───────────────
+# `@shuttering/starlight` lives on npmjs while every other `@shuttering/*` package lives
+# on GitHub Packages. That split is invisible until a consumer needs both, and then it is
+# unfixable on their side: `.npmrc` scope mapping is all-or-nothing —
+#
+#   @shuttering:registry=https://npm.pkg.github.com
+#
+# — and npm has no per-package registry key. A repo consuming starlight *plus* any
+# GH-hosted `@shuttering` package must therefore pin starlight to a hardcoded tarball
+# URL to escape the scope mapping, which has no semver range and can never float. One
+# consumer is frozen at 0.2.0 for exactly this reason.
+#
+# So starlight publishes to both. npmjs stays the primary (it is where it has always
+# been, and where its public consumers resolve it); GitHub Packages is added so the scope
+# mapping resolves it like every sibling and the override can be deleted.
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # The only credential needed for the GitHub Packages publish. No repository secret
+      # is involved, which is the reason this half can be automated at all.
+      packages: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          registry-url: https://npm.pkg.github.com
+          scope: '@shuttering'
+
+      - name: Is this version already on GitHub Packages?
+        id: check
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          v=$(node -p "require('./package.json').version")
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          if npm view "@shuttering/starlight@$v" version \
+               --registry=https://npm.pkg.github.com >/dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "$v is already on GitHub Packages — nothing to do."
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+            echo "$v is not on GitHub Packages — publishing."
+          fi
+
+      - name: Publish to GitHub Packages
+        if: steps.check.outputs.published == 'false'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # `publishConfig.registry` beats the `--registry` flag on publish, so pointing
+          # the CLI at GitHub Packages is not enough — the field has to be rewritten.
+          # Done to a scratch copy of package.json and restored after, so the published
+          # tarball still carries the npmjs registry for anyone who reads it there.
+          cp package.json package.json.bak
+          node -e '
+            const fs = require("node:fs");
+            const p = JSON.parse(fs.readFileSync("package.json", "utf8"));
+            p.publishConfig = { registry: "https://npm.pkg.github.com" };
+            fs.writeFileSync("package.json", JSON.stringify(p, null, 2) + "\n");
+          '
+          npm publish --no-git-checks || status=$?
+          mv package.json.bak package.json
+          exit ${status:-0}
+
+      # npmjs stays as it is. It needs a repository secret this workflow deliberately does
+      # not assume exists, and starlight has been published there by hand throughout. If
+      # NPM_TOKEN is ever added, this step starts working with no other change.
+      - name: Publish to npmjs
+        if: steps.check.outputs.published == 'false' && env.NPM_TOKEN != ''
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          v="${{ steps.check.outputs.version }}"
+          if npm view "@shuttering/starlight@$v" version \
+               --registry=https://registry.npmjs.org >/dev/null 2>&1; then
+            echo "$v is already on npmjs — skipping."
+          else
+            npm publish --registry=https://registry.npmjs.org --no-git-checks
+          fi

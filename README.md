@@ -48,6 +48,43 @@ starlight({
 }
 ```
 
+## Where it's published
+
+Both **npmjs** and **GitHub Packages**, with identical contents.
+
+npmjs is the primary and the reason this package exists there at all: public docs CI
+pulls it without a token, which nothing else in the family can offer. That has not
+changed.
+
+GitHub Packages is the second copy, and it exists for a problem that only appears in
+repos consuming starlight *alongside* another `@shuttering/*` package. Those live on
+GitHub Packages, so such a repo carries
+
+```
+@shuttering:registry=https://npm.pkg.github.com
+```
+
+in its `.npmrc` — and scope mapping is all-or-nothing. npm has no per-package registry
+key, so that one line sends *every* `@shuttering` request to GitHub Packages, starlight
+included. The only local escape is pinning starlight to a hardcoded tarball URL:
+
+```jsonc
+// don't do this any more
+"pnpm": {
+  "overrides": {
+    "@shuttering/starlight": "https://registry.npmjs.org/@shuttering/starlight/-/starlight-0.2.0.tgz"
+  }
+}
+```
+
+which works, has no semver range, and can therefore never float — one consumer sat
+frozen at `0.2.0` because of it. Publishing to both registries means the scope mapping
+resolves starlight like every sibling and the override can be deleted.
+
+**Which one you get:** if your `.npmrc` maps the `@shuttering` scope, GitHub Packages
+(and you'll need `NODE_AUTH_TOKEN`, as you already do for the others). Otherwise npmjs,
+tokenless, exactly as before.
+
 ## Reference grounds & palettes
 
 | Ground  | Look        | Home       | | Palette  | Accent    | Home      |
