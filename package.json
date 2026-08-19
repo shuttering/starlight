@@ -1,6 +1,6 @@
 {
   "name": "@shuttering/starlight",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A Starlight docs theme cut from the shuttering contract — token-driven grounds + palettes, quiet and low-border.",
   "license": "Apache-2.0",
   "type": "module",
@@ -33,5 +33,20 @@
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org"
+  },
+  "packageManager": "pnpm@11.21.0",
+  "scripts": {
+    "lint": "biome check . --error-on-warnings",
+    "format": "biome check --write .",
+    "build:fixture": "astro build --root test/fixture",
+    "test": "vitest run",
+    "verify": "pnpm lint && pnpm build:fixture && pnpm test"
+  },
+  "devDependencies": {
+    "@astrojs/starlight": "^0.41.7",
+    "@biomejs/biome": "2.5.8",
+    "astro": "7.2.2",
+    "vitest": "4.1.10",
+    "jsdom": "30.0.1"
   }
 }

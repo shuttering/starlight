@@ -1,0 +1,5 @@
+# esbuild ships a prebuilt binary via a postinstall script. pnpm blocks build
+# scripts by default; astro cannot start without it. Allowed by name rather than
+# disabling the protection wholesale.
+allowBuilds:
+  esbuild: true

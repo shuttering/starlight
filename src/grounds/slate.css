@@ -8,7 +8,7 @@
   --border: rgba(155, 176, 208, 0.1);
   --scrollbar-thumb: #3a4451;
 }
-:root[data-theme='light'] {
+:root[data-theme="light"] {
   --background: #f7f8fa;
   --foreground: #161a22;
   --card: #ffffff;
