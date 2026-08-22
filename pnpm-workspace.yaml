@@ -3,3 +3,10 @@
 # disabling the protection wholesale.
 allowBuilds:
   esbuild: true
+
+# pnpm withholds releases younger than its minimum release age, so a freshly
+# published contract resolves to the previous version instead of failing. The
+# contract check would then run against values nobody shipped. Excluded per exact
+# version rather than by lowering the age, so each adoption is a reviewable line.
+minimumReleaseAgeExclude:
+  - '@shuttering/tokens@1.0.0'

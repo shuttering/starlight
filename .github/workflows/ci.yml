@@ -13,6 +13,12 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # `@shuttering/tokens` is a private package. Without this the install 404s on
+      # it, which is the correct loud failure — the contract check has no operand
+      # and must not be allowed to pass by skipping.
+      packages: read
     steps:
       - uses: actions/checkout@v5
       # pnpm version comes from package.json#packageManager — don't pin here or
@@ -22,8 +28,21 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+          # Supplies the credential for the scope `.npmrc` maps to GitHub Packages.
+          # The repo `.npmrc` carries the mapping and no token; this carries the
+          # token and no mapping.
+          registry-url: https://npm.pkg.github.com
+          scope: '@shuttering'
       - run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: pnpm lint
+      # Ahead of the fixture build, and separate from it. The grounds and palettes
+      # are a transcription of `@shuttering/tokens`, so drift there is a wrong colour
+      # shipped to every consumer — a failure that has nothing to do with whether
+      # Astro can build, and must not be reported as an Astro failure or hidden
+      # behind one.
+      - run: pnpm test:contract
       # The real gate. This theme restyles Starlight-internal class names
       # (.sidebar-pane, .pagination-links, .expressive-code .frame, starlight-toc),
       # which no peer-dependency range can protect. Building a real Starlight site
