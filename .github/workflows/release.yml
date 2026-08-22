@@ -48,6 +48,13 @@ jobs:
           registry-url: https://npm.pkg.github.com
           scope: '@shuttering'
 
+      # Every npm command in this job names its registry with `--@shuttering:registry=`
+      # rather than `--registry=`. The repo `.npmrc` maps the whole scope to GitHub
+      # Packages so the private `@shuttering/tokens` resolves during CI, and a scoped
+      # mapping outranks both the `--registry` flag and `publishConfig.registry`. A bare
+      # `--registry` is therefore accepted and ignored, and every command in a workflow
+      # that addresses two registries would quietly address one.
+      #
       # Asked of each registry separately. The two publishes can succeed independently
       # — the npmjs half needs a repository secret the GitHub Packages half does not —
       # so a single answer for both would let one registry's success suppress the
@@ -60,7 +67,7 @@ jobs:
           v=$(node -p "require('./package.json').version")
           echo "version=$v" >> "$GITHUB_OUTPUT"
           probe() {
-            if npm view "@shuttering/starlight@$v" version --registry="$2" >/dev/null 2>&1; then
+            if npm view "@shuttering/starlight@$v" version --@shuttering:registry="$2" >/dev/null 2>&1; then
               echo "on_$1=true" >> "$GITHUB_OUTPUT"
               echo "$v is already on $2 — nothing to do."
             else
@@ -76,10 +83,11 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # `publishConfig.registry` beats the `--registry` flag on publish, so pointing
-          # the CLI at GitHub Packages is not enough — the field has to be rewritten.
-          # Done to a scratch copy of package.json and restored after, so the published
-          # tarball still carries the npmjs registry for anyone who reads it there.
+          # The scoped flag settles where this goes. `publishConfig.registry` is
+          # rewritten as well so the two cannot disagree, and because the rewrite also
+          # drops `access`, which GitHub Packages derives from repository visibility.
+          # Done to a scratch copy and restored after, so the published tarball still
+          # carries the npmjs registry for anyone who reads it there.
           cp package.json package.json.bak
           node -e '
             const fs = require("node:fs");
@@ -87,7 +95,7 @@ jobs:
             p.publishConfig = { registry: "https://npm.pkg.github.com" };
             fs.writeFileSync("package.json", JSON.stringify(p, null, 2) + "\n");
           '
-          npm publish --no-git-checks || status=$?
+          npm publish --@shuttering:registry=https://npm.pkg.github.com --no-git-checks || status=$?
           mv package.json.bak package.json
           exit ${status:-0}
 
@@ -99,7 +107,7 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --registry=https://registry.npmjs.org --no-git-checks
+        run: npm publish --@shuttering:registry=https://registry.npmjs.org --no-git-checks
 
       # A skipped npmjs publish is the one outcome that looks like success and is not:
       # the two consumers in the estate resolve from different registries, so a version
