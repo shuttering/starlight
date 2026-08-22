@@ -1,0 +1,35 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      # pnpm version comes from package.json#packageManager — don't pin here or
+      # it trips ERR_PNPM_BAD_PM_VERSION.
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      # The real gate. This theme restyles Starlight-internal class names
+      # (.sidebar-pane, .pagination-links, .expressive-code .frame, starlight-toc),
+      # which no peer-dependency range can protect. Building a real Starlight site
+      # against the theme is the only thing that catches an internals change — or a
+      # selector that collides with markup the theme does not own.
+      - run: pnpm build:fixture
+      # Asserts the built output, not the source: the view-transition collision that
+      # shipped in 0.2.0 only exists once Starlight and expressive-code have rendered.
+      - run: pnpm test

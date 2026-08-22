@@ -38,7 +38,10 @@
   --sl-color-white: var(--foreground);
   --sl-color-gray-1: color-mix(in oklab, var(--foreground) 90%, var(--background));
   --sl-color-gray-2: color-mix(in oklab, var(--foreground) 75%, var(--background));
-  --sl-color-gray-3: var(--muted-foreground, color-mix(in oklab, var(--foreground) 55%, var(--background)));
+  --sl-color-gray-3: var(
+    --muted-foreground,
+    color-mix(in oklab, var(--foreground) 55%, var(--background))
+  );
   --sl-color-gray-4: color-mix(in oklab, var(--foreground) 40%, var(--background));
   --sl-color-gray-5: color-mix(in oklab, var(--foreground) 22%, var(--background));
   --sl-color-gray-6: var(--card, color-mix(in oklab, var(--foreground) 9%, var(--background)));
@@ -77,14 +80,17 @@
    Chrome — quieter than stock: separate with surface + space, not borders.
    ───────────────────────────────────────────────────────────────────────── */
 
-/* Header: one plane with the page — a whisper of blur, no rule, no divider. */
-.header {
+/* Header: one plane with the page — a whisper of blur, no rule, no divider.
+   Qualified by element: `.header` alone also selects the header Starlight nests inside
+   this one, and the bar expressive-code emits for a titled code block. */
+header.header {
   border-bottom: none;
   box-shadow: none;
   backdrop-filter: blur(8px);
 }
 /* Drop Starlight's vertical divider before the header controls. */
 .social-icons::after {
+  /* biome-ignore lint/complexity/noImportantStyles: outranks the divider Starlight sets on its own selector */
   border-inline-end: 0 !important;
 }
 .site-title {
@@ -112,8 +118,8 @@ starlight-menu-content .large {
   text-transform: lowercase;
   color: var(--sl-color-gray-3);
 }
-.sidebar-content a[aria-current='page'],
-.sidebar-content a[aria-current='page']:hover {
+.sidebar-content a[aria-current="page"],
+.sidebar-content a[aria-current="page"]:hover {
   position: relative;
   color: var(--sl-color-white);
   background: var(--sh-accent-wash);
@@ -122,8 +128,8 @@ starlight-menu-content .large {
 }
 /* Light the group rail beside the active leaf (align to the list's
    border-inline-start), rather than drawing a second line at the item's edge. */
-.sidebar-content a[aria-current='page']::before {
-  content: '';
+.sidebar-content a[aria-current="page"]::before {
+  content: "";
   position: absolute;
   inset-block: 0;
   inset-inline-start: calc(-1 * var(--sl-sidebar-item-padding-inline, 0.5rem) - 1px);
@@ -223,7 +229,11 @@ starlight-menu-content .large {
   border: none;
   border-inline-start: 2px solid var(--starlight-aside-border, var(--sl-color-accent));
   border-radius: 0 6px 6px 0;
-  background: color-mix(in oklab, var(--starlight-aside-border, var(--sl-color-accent)) 8%, var(--background));
+  background: color-mix(
+    in oklab,
+    var(--starlight-aside-border, var(--sl-color-accent)) 8%,
+    var(--background)
+  );
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -295,7 +305,10 @@ footer .meta p {
    hover. Color from the ground's --scrollbar-thumb (derived if a ground omits it).
    ───────────────────────────────────────────────────────────────────────── */
 :root {
-  --sh-scrollbar-thumb: var(--scrollbar-thumb, color-mix(in oklab, var(--foreground) 24%, var(--background)));
+  --sh-scrollbar-thumb: var(
+    --scrollbar-thumb,
+    color-mix(in oklab, var(--foreground) 24%, var(--background))
+  );
 }
 * {
   scrollbar-width: thin;
@@ -335,7 +348,7 @@ footer .meta p {
    header and sidebar are pinned as their own groups and held perfectly still,
    so the logo and nav never flicker or dip mid-transition.
    ───────────────────────────────────────────────────────────────────────── */
-.header {
+header.header {
   view-transition-name: sh-header;
 }
 .sidebar-pane {
@@ -376,6 +389,7 @@ footer .meta p {
   ::view-transition-group(*),
   ::view-transition-old(*),
   ::view-transition-new(*) {
+    /* biome-ignore lint/complexity/noImportantStyles: a reduced-motion backstop must outrank every animation it disables */
     animation: none !important;
   }
 }
