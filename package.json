@@ -1,6 +1,6 @@
 {
   "name": "@shuttering/starlight",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "A Starlight docs theme cut from the shuttering contract \u2014 token-driven grounds + palettes, quiet and low-border.",
   "license": "Apache-2.0",
   "type": "module",
